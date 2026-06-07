@@ -1,5 +1,4 @@
 /*У файлі main.js напиши всю логіку роботи додатка. Виклики нотифікацій iziToast, усі перевірки на довжину масиву в отриманій відповіді та логіку прокручування сторінки (scroll) робимо саме в цьому файлі. Імпортуй в нього функції із файлів pixabay-api.js та render-functions.js та викликай їх у відповідний момент. */
-import axios from 'axios';
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 
@@ -15,7 +14,8 @@ const searchInput = document.querySelector('input[name="search-text"]');
 
 let page = 1;
 let searchWord = "";
-let totalHits = null;  
+let totalHits = null;
+let hitsLength = null;  
 
 form.addEventListener("submit", handleSubmit);
 loadMoreButton.addEventListener("click", handleClick);
@@ -36,7 +36,8 @@ async function handleSubmit(event) {
     try {
         const data = await getImagesByQuery(searchWord, page);
         totalHits = data.totalHits;
-        if (data.hits.length > 0) {
+        hitsLength = data.hits.length;
+        if (hitsLength > 0) {
             createGallery(data.hits);
         } else {
             iziToast.error({
@@ -52,19 +53,20 @@ async function handleSubmit(event) {
             message: `${error.message}`,
         });
     } finally {
-        
         hideLoader();
-        if (page < getMaxPages(totalHits)) {
+        event.target.reset();
+        if (page < getMaxPages(totalHits) && hitsLength!==0) {
 
             showLoadMoreButton();
             
-        } else {
+        } else if (page >= getMaxPages(totalHits) && hitsLength !== 0){
             
             iziToast.warning({
                 title: 'Warning',
                 message: "We're sorry, but you've reached the end of search results."
             });
         }
+        
     }
         
 }
@@ -75,7 +77,8 @@ async function handleClick(event) {
     page++;
     try {
         const data = await getImagesByQuery(searchWord, page);
-        if (data.hits.length > 0) {
+        hitsLength = data.hits.length;
+        if (hitsLength > 0) {
             createGallery(data.hits);
         } else {
             iziToast.error({
@@ -93,7 +96,7 @@ async function handleClick(event) {
             behavior: "smooth"
         });
 
-    } catch (error){
+    } catch (error) {
         iziToast.error({
             title: 'Error',
             message: `${error.message}`,
@@ -101,11 +104,11 @@ async function handleClick(event) {
     } finally {
 
         hideLoader();
-        if (page < getMaxPages(totalHits)) {
+        if (page < getMaxPages(totalHits) && hitsLength !== 0) {
 
             showLoadMoreButton();
             
-        } else {
+        } else if (page >= getMaxPages(totalHits) && hitsLength !== 0){
             
             iziToast.warning({
                 title: 'Warning',
